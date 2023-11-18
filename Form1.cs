@@ -103,13 +103,12 @@ namespace ClientIP
                         stream = client.GetStream();
 
                         // при обрыве связи - Unable to read data from the transport connection: A blocking operation was interrupted by a call to WSACancelBlockingCall.
-
                         numBytesRead = stream.Read(buff, 0, buff.Length); // прочитал сообщение из потока в буфер
                         
                         if (numBytesRead > 0)
                         {
                             str = Encoding.ASCII.GetString(buff, 0, numBytesRead); // перекодировал количество полученных байтов в строку
-                            LogLocal.WriteLogLocal(logDir, str);
+                            LogLocal.WriteLogLocal(LogLocal.logDir, str);
 
                             tbReceive.Invoke(new Action(() =>
                             {
@@ -117,7 +116,6 @@ namespace ClientIP
                                 tbReceive.ScrollToCaret();
                             }
                             ));
-
                         }
                     });
                 }
@@ -156,12 +154,58 @@ namespace ClientIP
         #endregion
 
         #region Запись в поток сообщения для устройства COM (исключением не оборачивал) 
-        private void SendComandGetWeight(NetworkStream astream, string command) 
+        private bool SendComandGetWeight(NetworkStream astream, string command) 
         {
-            // try bloc must'll be here
-            byte[] converted = System.Text.Encoding.ASCII.GetBytes(command);
-            astream.Write(converted, 0, converted.Length);
-
+            byte[] converted = null;
+            
+            try
+            {
+               converted = System.Text.Encoding.ASCII.GetBytes(command);
+            }
+            catch (ArgumentNullException ex)
+            {
+                // command is null.
+                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
+                return false;
+            } 
+            catch (EncoderFallbackException ex) 
+            {
+                // A fallback occurred (see Character Encoding in .NET for complete explanation)
+                // -and- System.Text.Encoding.EncoderFallback is set to System.Text.EncoderExceptionFallback.
+                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
+                return false;
+            }
+            
+            try
+            {
+                astream.Write(converted, 0, converted.Length); // пробуем записать в поток сообщение
+                return true;
+            }
+            catch (ArgumentNullException ex)
+            {
+                //     The buffer parameter is null.
+                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
+                return false;
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // The offset parameter is less than 0. -or- The offset parameter is greater than the length of buffer. -or- The size
+                // parameter is less than 0. -or- The size parameter is greater than the length of buffer minus the value of the offset parameter.
+                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
+                return false;
+            }
+            catch (IOException ex)
+            {
+                // There was a failure while writing to the network. -or- An error occurred when accessing the socket.
+                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
+                return false;
+            }
+            catch (ObjectDisposedException ex) 
+            {
+                // The System.Net.Sockets.NetworkStream is closed. -or- There was a failure reading from the network.
+                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
+                return false;
+            }
         }
         #endregion
 
