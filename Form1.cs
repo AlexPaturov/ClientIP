@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,9 +16,9 @@ namespace ClientIP
         public static TimeSpan ReceiveTimeout { get; set; }
 
         public static byte[] buff = new byte[49152];
-        public static string ipAddress = "127.0.0.3";
+        public static string ipAddress = "127.0.0.1";
         public static int port = 8888;
-        public bool workFlag = false;
+        public volatile bool _workFlag = false;
         public static string logDir = string.Empty;
         public NetworkStream stream = null;
         TaskCompletionSource<bool> tcs = null;
@@ -26,8 +27,8 @@ namespace ClientIP
 
         public formClientIP()
         {
-            SendTimeout = TimeSpan.FromSeconds(50);
-            ReceiveTimeout = TimeSpan.FromSeconds(50);
+            SendTimeout = TimeSpan.FromSeconds(200);
+            ReceiveTimeout = TimeSpan.FromSeconds(200);
             InitializeComponent();
         }
 
@@ -61,7 +62,7 @@ namespace ClientIP
 
             try
             {
-                client.Connect(ipAddress, port);
+                client.Connect(tbIp.Text, Int32.Parse(tbPort.Text));
             }
             catch (SocketException ex)
             {
@@ -90,36 +91,75 @@ namespace ClientIP
         public async Task StartGettingData() 
         {
             #region Получение данных от сервера
-            workFlag = true;
-            //while (workFlag)
-            //{
+            _workFlag = true;
+            while (_workFlag)
+            {
                 if (client.Connected)
                 {
                     await Task.Run(() =>
                     {
                         int numBytesRead = 0;
-                        string str = string.Empty;
-
                         stream = client.GetStream();
 
                         // при обрыве связи - Unable to read data from the transport connection: A blocking operation was interrupted by a call to WSACancelBlockingCall.
-                        numBytesRead = stream.Read(buff, 0, buff.Length); // прочитал сообщение из потока в буфер
-                        
+                        try 
+                        { 
+                            numBytesRead = stream.Read(buff, 0, buff.Length); // прочитал сообщение из потока в буфер
+                        }catch (IOException ex) 
+                        {
+                            #region Show exception message
+                            tbReceive.Invoke(new Action(() =>
+                            {
+                                tbReceive.AppendText(ex.StackTrace + "\n");
+                                tbReceive.ScrollToCaret();
+                                LogLocal.WriteLogLocal(LogLocal.logDir, ex.StackTrace);
+                            }
+                            ));
+                            stream.Dispose();
+                            #endregion
+                        }
+
                         if (numBytesRead > 0)
                         {
-                            str = Encoding.ASCII.GetString(buff, 0, numBytesRead); // перекодировал количество полученных байтов в строку
-                            LogLocal.WriteLogLocal(LogLocal.logDir, str);
 
                             tbReceive.Invoke(new Action(() =>
                             {
-                                tbReceive.AppendText(str + "\n");
+                                tbReceive.AppendText("get bytes: " + numBytesRead.ToString() + "\n");
                                 tbReceive.ScrollToCaret();
                             }
                             ));
+
+                            tbReceive.Invoke(new Action(() =>
+                            {
+                                tbReceive.AppendText(Encoding.GetEncoding(1251).GetString(buff, 0, numBytesRead) + "\n");
+                                tbReceive.ScrollToCaret();
+                                LogLocal.WriteLogLocal(LogLocal.logDir, Encoding.GetEncoding(1251).GetString(buff, 0, numBytesRead));
+                            }
+                            ));
+                        }
+                        else 
+                        { 
+                            Thread.Sleep(10);
                         }
                     });
                 }
-            //}
+            }
+
+            try
+            {
+                
+                client.Close();
+                stream.Close();
+                tbReceive.AppendText("Client disconnected." + "\n");
+                tbReceive.ScrollToCaret();
+                LogLocal.WriteLogLocal(logDir, "Client disconnected.");
+            }
+            catch (Exception ex)
+            {
+                LogLocal.WriteLogLocal(logDir, ex.Message);
+            }
+
+
             #endregion
         }
 
@@ -128,13 +168,6 @@ namespace ClientIP
         {
             if (client.Connected)
             {
-                // Записать в поток управляющую команду.
-                //tcs = new TaskCompletionSource<bool>();
-                //tcs.Task.run
-                //await tcs.Task;
-
-
-
                 StartGettingData();
             }
             else
@@ -149,18 +182,21 @@ namespace ClientIP
         private void btnSend_Click(object sender, EventArgs e)
         {
             // пишем серверу сообщение, если надо. Может использоваться для отправки управляющих команд. 
-            SendComandGetWeight(stream, tbMessage.Text.Trim());
+            if (chbSentQueue.Checked)
+                timerSend.Enabled = true;
+            else
+                SendComandGetWeight(stream, tbMessage.Text.Trim());
         }
         #endregion
 
-        #region Запись в поток сообщения для устройства COM (исключением не оборачивал) 
+        #region Запись в поток сообщения для устройства COM 
         private bool SendComandGetWeight(NetworkStream astream, string command) 
         {
             byte[] converted = null;
             
             try
             {
-               converted = System.Text.Encoding.ASCII.GetBytes(command);
+               converted = System.Text.Encoding.GetEncoding(1251).GetBytes(command);
             }
             catch (ArgumentNullException ex)
             {
@@ -212,20 +248,22 @@ namespace ClientIP
         #region btnCloseConn_Click
         private void btnCloseConn_Click(object sender, EventArgs e)
         {
-            if (client != null)
-            {
-                try
-                {
-                    client.Close();
-                    tbReceive.AppendText("Client disconnected." + "\n");
-                    tbReceive.ScrollToCaret();  
-                    LogLocal.WriteLogLocal(logDir, "Client disconnected.");
-                }
-                catch (Exception ex)
-                {
-                    LogLocal.WriteLogLocal(logDir, ex.Message);
-                }
-            }
+            //if (client != null)
+            //{
+            //    try
+            //    {
+            //        _workFlag = false;
+            //        client.Close();
+            //        tbReceive.AppendText("Client disconnected." + "\n");
+            //        tbReceive.ScrollToCaret();  
+            //        LogLocal.WriteLogLocal(logDir, "Client disconnected.");
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        LogLocal.WriteLogLocal(logDir, ex.Message);
+            //    }
+            //}
+            _workFlag = false;
         }
         #endregion
 
@@ -247,6 +285,31 @@ namespace ClientIP
             LogLocal.WriteLogLocal(LogLocal.logDir, "Stop     PROG: " + Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location));
         }
         #endregion
-       
+
+        private void timerSend_Tick(object sender, EventArgs e)
+        {
+            SendComandGetWeight(stream, tbMessage.Text.Trim());
+        }
+
+        private void chbSentQueue_CheckedChanged(object sender, EventArgs e)
+        {
+            timerSend.Stop();
+
+            if(tbWaitSentMillisec.Enabled == true)
+                tbWaitSentMillisec.Enabled = false; 
+            else
+                tbWaitSentMillisec.Enabled = true;  
+        }
+
+        private void formClientIP_Leave(object sender, EventArgs e)
+        {
+            _workFlag = false;
+            
+            if(client != null)
+              client.Dispose();
+
+            if (stream != null)
+              stream.Dispose();
+        }
     }
 }

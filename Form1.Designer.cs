@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.btnSend = new System.Windows.Forms.Button();
             this.btnSetConn = new System.Windows.Forms.Button();
             this.tbReceive = new System.Windows.Forms.RichTextBox();
@@ -36,14 +37,23 @@
             this.gbReceive = new System.Windows.Forms.GroupBox();
             this.btnClear = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.gbMode = new System.Windows.Forms.GroupBox();
+            this.rbText = new System.Windows.Forms.RadioButton();
+            this.rbHex = new System.Windows.Forms.RadioButton();
+            this.chbLF = new System.Windows.Forms.CheckBox();
+            this.chbCR = new System.Windows.Forms.CheckBox();
+            this.chbSentQueue = new System.Windows.Forms.CheckBox();
+            this.tbWaitSentMillisec = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.tbIp = new System.Windows.Forms.TextBox();
             this.tbPort = new System.Windows.Forms.TextBox();
             this.gbNetworkConnection = new System.Windows.Forms.GroupBox();
-            this.btnCloseConn = new System.Windows.Forms.Button();
             this.btnGetData = new System.Windows.Forms.Button();
+            this.btnCloseConn = new System.Windows.Forms.Button();
+            this.timerSend = new System.Windows.Forms.Timer(this.components);
             this.gbReceive.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.gbMode.SuspendLayout();
             this.gbNetworkConnection.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -126,14 +136,90 @@
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackColor = System.Drawing.Color.Lavender;
+            this.groupBox1.Controls.Add(this.gbMode);
+            this.groupBox1.Controls.Add(this.chbLF);
+            this.groupBox1.Controls.Add(this.chbCR);
+            this.groupBox1.Controls.Add(this.chbSentQueue);
+            this.groupBox1.Controls.Add(this.tbWaitSentMillisec);
             this.groupBox1.Controls.Add(this.tbMessage);
             this.groupBox1.Controls.Add(this.btnSend);
             this.groupBox1.Location = new System.Drawing.Point(472, 120);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(347, 50);
+            this.groupBox1.Size = new System.Drawing.Size(347, 158);
             this.groupBox1.TabIndex = 6;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Send to COM";
+            // 
+            // gbMode
+            // 
+            this.gbMode.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.gbMode.BackColor = System.Drawing.Color.Azure;
+            this.gbMode.Controls.Add(this.rbText);
+            this.gbMode.Controls.Add(this.rbHex);
+            this.gbMode.Location = new System.Drawing.Point(9, 77);
+            this.gbMode.Name = "gbMode";
+            this.gbMode.Size = new System.Drawing.Size(89, 64);
+            this.gbMode.TabIndex = 8;
+            this.gbMode.TabStop = false;
+            this.gbMode.Text = "Data &Mode";
+            // 
+            // rbText
+            // 
+            this.rbText.AutoSize = true;
+            this.rbText.Location = new System.Drawing.Point(12, 19);
+            this.rbText.Name = "rbText";
+            this.rbText.Size = new System.Drawing.Size(46, 17);
+            this.rbText.TabIndex = 0;
+            this.rbText.Text = "Text";
+            // 
+            // rbHex
+            // 
+            this.rbHex.AutoSize = true;
+            this.rbHex.Location = new System.Drawing.Point(12, 39);
+            this.rbHex.Name = "rbHex";
+            this.rbHex.Size = new System.Drawing.Size(44, 17);
+            this.rbHex.TabIndex = 1;
+            this.rbHex.Text = "Hex";
+            // 
+            // chbLF
+            // 
+            this.chbLF.AutoSize = true;
+            this.chbLF.Location = new System.Drawing.Point(112, 116);
+            this.chbLF.Name = "chbLF";
+            this.chbLF.Size = new System.Drawing.Size(121, 17);
+            this.chbLF.TabIndex = 7;
+            this.chbLF.Text = "add LF to messsage";
+            this.chbLF.UseVisualStyleBackColor = true;
+            // 
+            // chbCR
+            // 
+            this.chbCR.AutoSize = true;
+            this.chbCR.Location = new System.Drawing.Point(112, 94);
+            this.chbCR.Name = "chbCR";
+            this.chbCR.Size = new System.Drawing.Size(119, 17);
+            this.chbCR.TabIndex = 6;
+            this.chbCR.Text = "add CR to message";
+            this.chbCR.UseVisualStyleBackColor = true;
+            // 
+            // chbSentQueue
+            // 
+            this.chbSentQueue.AutoSize = true;
+            this.chbSentQueue.Location = new System.Drawing.Point(112, 48);
+            this.chbSentQueue.Name = "chbSentQueue";
+            this.chbSentQueue.Size = new System.Drawing.Size(81, 17);
+            this.chbSentQueue.TabIndex = 5;
+            this.chbSentQueue.Text = "Sent queue";
+            this.chbSentQueue.UseVisualStyleBackColor = true;
+            this.chbSentQueue.CheckedChanged += new System.EventHandler(this.chbSentQueue_CheckedChanged);
+            // 
+            // tbWaitSentMillisec
+            // 
+            this.tbWaitSentMillisec.Location = new System.Drawing.Point(6, 45);
+            this.tbWaitSentMillisec.Name = "tbWaitSentMillisec";
+            this.tbWaitSentMillisec.Size = new System.Drawing.Size(100, 20);
+            this.tbWaitSentMillisec.TabIndex = 4;
+            this.tbWaitSentMillisec.Text = "1000";
+            this.tbWaitSentMillisec.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label2
             // 
@@ -176,6 +262,16 @@
             this.gbNetworkConnection.TabStop = false;
             this.gbNetworkConnection.Text = "NET preferences";
             // 
+            // btnGetData
+            // 
+            this.btnGetData.Location = new System.Drawing.Point(227, 49);
+            this.btnGetData.Name = "btnGetData";
+            this.btnGetData.Size = new System.Drawing.Size(103, 23);
+            this.btnGetData.TabIndex = 11;
+            this.btnGetData.Text = "Start getting data";
+            this.btnGetData.UseVisualStyleBackColor = true;
+            this.btnGetData.Click += new System.EventHandler(this.btnGetData_Click);
+            // 
             // btnCloseConn
             // 
             this.btnCloseConn.Location = new System.Drawing.Point(227, 78);
@@ -186,15 +282,10 @@
             this.btnCloseConn.UseVisualStyleBackColor = true;
             this.btnCloseConn.Click += new System.EventHandler(this.btnCloseConn_Click);
             // 
-            // btnGetData
+            // timerSend
             // 
-            this.btnGetData.Location = new System.Drawing.Point(227, 49);
-            this.btnGetData.Name = "btnGetData";
-            this.btnGetData.Size = new System.Drawing.Size(103, 23);
-            this.btnGetData.TabIndex = 11;
-            this.btnGetData.Text = "Start getting data";
-            this.btnGetData.UseVisualStyleBackColor = true;
-            this.btnGetData.Click += new System.EventHandler(this.btnGetData_Click);
+            this.timerSend.Interval = 1000;
+            this.timerSend.Tick += new System.EventHandler(this.timerSend_Tick);
             // 
             // formClientIP
             // 
@@ -209,9 +300,12 @@
             this.Text = "Client ip to Serial";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.formClientIP_FormClosed);
             this.Load += new System.EventHandler(this.formClientIP_Load);
+            this.Leave += new System.EventHandler(this.formClientIP_Leave);
             this.gbReceive.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.gbMode.ResumeLayout(false);
+            this.gbMode.PerformLayout();
             this.gbNetworkConnection.ResumeLayout(false);
             this.gbNetworkConnection.PerformLayout();
             this.ResumeLayout(false);
@@ -234,6 +328,14 @@
         private System.Windows.Forms.GroupBox gbNetworkConnection;
         private System.Windows.Forms.Button btnCloseConn;
         private System.Windows.Forms.Button btnGetData;
+        private System.Windows.Forms.Timer timerSend;
+        private System.Windows.Forms.GroupBox gbMode;
+        private System.Windows.Forms.RadioButton rbText;
+        private System.Windows.Forms.RadioButton rbHex;
+        private System.Windows.Forms.CheckBox chbLF;
+        private System.Windows.Forms.CheckBox chbCR;
+        private System.Windows.Forms.CheckBox chbSentQueue;
+        private System.Windows.Forms.TextBox tbWaitSentMillisec;
     }
 }
 
