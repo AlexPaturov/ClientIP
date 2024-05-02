@@ -59,33 +59,9 @@ namespace ClientIP
             client.SendTimeout = (int)SendTimeout.TotalMilliseconds;
             client.ReceiveTimeout = (int)ReceiveTimeout.TotalMilliseconds;
             client.ReceiveBufferSize = 1024; // ? 16.11.2023
+            client.Connect(tbIp.Text, Int32.Parse(tbPort.Text));
 
-            try
-            {
-                client.Connect(tbIp.Text, Int32.Parse(tbPort.Text));
-            }
-            catch (SocketException ex)
-            {
-                tbReceive.AppendText(ex.Message + "\n");
-                tbReceive.ScrollToCaret();
-                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
-                return false;
-            }
-
-            if (client.Connected)
-            { 
-                tbReceive.AppendText("Client connected." + "\n");
-                tbReceive.ScrollToCaret();
-                LogLocal.WriteLogLocal(LogLocal.logDir, "Client connected.");
-                return true;
-            }
-            else
-            {
-                tbReceive.AppendText("Connection failed." + "\n");
-                tbReceive.ScrollToCaret();
-                LogLocal.WriteLogLocal(LogLocal.logDir, "Connection failed.");
-                return false;
-            }
+            return false;
         }
 
         public async Task StartGettingData() 
@@ -100,28 +76,11 @@ namespace ClientIP
                     {
                         int numBytesRead = 0;
                         stream = client.GetStream();
-
-                        // при обрыве связи - Unable to read data from the transport connection: A blocking operation was interrupted by a call to WSACancelBlockingCall.
-                        try 
-                        { 
-                            numBytesRead = stream.Read(buff, 0, buff.Length); // прочитал сообщение из потока в буфер
-                        }catch (IOException ex) 
-                        {
-                            #region Show exception message
-                            tbReceive.Invoke(new Action(() =>
-                            {
-                                tbReceive.AppendText(ex.StackTrace + "\n");
-                                tbReceive.ScrollToCaret();
-                                LogLocal.WriteLogLocal(LogLocal.logDir, ex.StackTrace);
-                            }
-                            ));
-                            stream.Dispose();
-                            #endregion
-                        }
+                        numBytesRead = stream.Read(buff, 0, buff.Length); // прочитал сообщение из потока в буфер
 
                         if (numBytesRead > 0)
                         {
-
+                            #region show receiwed message
                             tbReceive.Invoke(new Action(() =>
                             {
                                 tbReceive.AppendText("get bytes: " + numBytesRead.ToString() + "\n");
@@ -136,6 +95,7 @@ namespace ClientIP
                                 LogLocal.WriteLogLocal(LogLocal.logDir, Encoding.GetEncoding(1251).GetString(buff, 0, numBytesRead));
                             }
                             ));
+                            #endregion
                         }
                         else 
                         { 
@@ -193,55 +153,9 @@ namespace ClientIP
         private bool SendComandGetWeight(NetworkStream astream, string command) 
         {
             byte[] converted = null;
-            
-            try
-            {
-               converted = System.Text.Encoding.GetEncoding(1251).GetBytes(command);
-            }
-            catch (ArgumentNullException ex)
-            {
-                // command is null.
-                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
-                return false;
-            } 
-            catch (EncoderFallbackException ex) 
-            {
-                // A fallback occurred (see Character Encoding in .NET for complete explanation)
-                // -and- System.Text.Encoding.EncoderFallback is set to System.Text.EncoderExceptionFallback.
-                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
-                return false;
-            }
-            
-            try
-            {
-                astream.Write(converted, 0, converted.Length); // пробуем записать в поток сообщение
-                return true;
-            }
-            catch (ArgumentNullException ex)
-            {
-                //     The buffer parameter is null.
-                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
-                return false;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                // The offset parameter is less than 0. -or- The offset parameter is greater than the length of buffer. -or- The size
-                // parameter is less than 0. -or- The size parameter is greater than the length of buffer minus the value of the offset parameter.
-                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
-                return false;
-            }
-            catch (IOException ex)
-            {
-                // There was a failure while writing to the network. -or- An error occurred when accessing the socket.
-                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
-                return false;
-            }
-            catch (ObjectDisposedException ex) 
-            {
-                // The System.Net.Sockets.NetworkStream is closed. -or- There was a failure reading from the network.
-                LogLocal.WriteLogLocal(LogLocal.logDir, ex.Message);
-                return false;
-            }
+            converted = System.Text.Encoding.GetEncoding(1251).GetBytes(command);
+            astream.Write(converted, 0, converted.Length); // пробуем записать в поток сообщение
+            return true;  
         }
         #endregion
 
