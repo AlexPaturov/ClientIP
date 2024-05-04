@@ -83,14 +83,16 @@ namespace ClientIP
                             #region show receiwed message
                             tbReceive.Invoke(new Action(() =>
                             {
-                                tbReceive.AppendText("get bytes: " + numBytesRead.ToString() + "\n");
+                                //tbReceive.AppendText("get bytes: " + numBytesRead.ToString() + "\n"); //
+                                tbReceive.AppendText("get bytes: " + numBytesRead.ToString()); //
                                 tbReceive.ScrollToCaret();
                             }
                             ));
 
                             tbReceive.Invoke(new Action(() =>
                             {
-                                tbReceive.AppendText(Encoding.GetEncoding(1251).GetString(buff, 0, numBytesRead) + "\n");
+                                //tbReceive.AppendText(Encoding.GetEncoding(1251).GetString(buff, 0, numBytesRead) + "\n");
+                                tbReceive.AppendText(Encoding.GetEncoding(1251).GetString(buff, 0, numBytesRead));
                                 tbReceive.ScrollToCaret();
                                 LogLocal.WriteLogLocal(LogLocal.logDir, Encoding.GetEncoding(1251).GetString(buff, 0, numBytesRead));
                             }
