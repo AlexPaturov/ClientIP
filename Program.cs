@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +9,8 @@ namespace ClientIP
 {
     internal static class Program
     {
+
+       
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -16,7 +19,7 @@ namespace ClientIP
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new formClientIP());
+            Application.Run(new FormClientIP());
         }
     }
 }
