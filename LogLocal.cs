@@ -7,6 +7,13 @@ namespace ClientIP
     public static class LogLocal
     {
         public static string logDir { get; set; }
+
+        static LogLocal()
+        {
+            logDir = GetLocalDirPath();
+        }
+
+
         #region Получаю имя сборки GetPOname()
         public static string GetPOname() 
         {
@@ -46,6 +53,19 @@ namespace ClientIP
                 }
             }
             catch (Exception ex) { /* supress */ } 
+        }
+
+        public static void WriteLogLocal( string message)
+        {
+            CreateIfMissing(logDir); // проверяю на наличие директории и если её нет - создаю
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(logDir + "\\log.txt", true))
+                {
+                    writer.WriteLineAsync(DateTime.Now.ToString("yyyy.mm.dd hh:mm:ss.fff") + " " + message); // исправить на запись по синхронизации с другими участниками записи
+                }
+            }
+            catch (Exception ex) { /* supress */ }
         }
         #endregion
     }
