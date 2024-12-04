@@ -80,13 +80,13 @@ namespace ClientIP.UDPservices
                 message = message.Substring(12);
                 resultDict.Add("value06", message.Substring(0, 11));
                 message = message.Substring(12);
-                resultDict.Add("value07", message.Substring(0, 11));
+                resultDict.Add("value07", message.Substring(0, 11)); // датчик 1
                 message = message.Substring(12);
-                resultDict.Add("value08", message.Substring(0, 11));
+                resultDict.Add("value08", message.Substring(0, 11)); // датчик 2
                 message = message.Substring(12);
-                resultDict.Add("value09", message.Substring(0, 11));
+                resultDict.Add("value09", message.Substring(0, 11)); // датчик 3
                 message = message.Substring(12);
-                resultDict.Add("value10", message.Substring(0, 11));
+                resultDict.Add("value10", message.Substring(0, 11)); // датчик 4
                 message = message.Substring(12);
                 resultDict.Add("value11", message.Substring(0, 11));
                 message = message.Substring(12);
@@ -151,7 +151,7 @@ namespace ClientIP.UDPservices
         #endregion
 
         // Ошибка - что будем делать?
-        #region
+        #region HexStringToByteArray()
         private byte[] HexStringToByteArray(string hex)
         {
 

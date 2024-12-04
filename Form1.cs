@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using ClientIP.Response;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace ClientIP
 {
@@ -138,8 +141,9 @@ namespace ClientIP
                     if (bytesRead > 0)
                     {
                         string receivedText = Encoding.GetEncoding(1251).GetString(_buffer, 0, bytesRead);
-                        AppendTextToReceive($"Received {bytesRead} bytes: {receivedText}\n");
+                        AppendTextToReceive($"Received bytes: {bytesRead}\n{receivedText}\n");
                         LogLocal.WriteLogLocal(receivedText);
+                        FullWeightField(receivedText);
                     }
                     else
                     {
@@ -160,6 +164,45 @@ namespace ClientIP
             {
                 CloseConnection();
             }
+        }
+
+        // Заполняю эдиты данными из XML документа
+        private void FullWeightField(string receivedText)
+        {
+            var serializer = new XmlSerializer(typeof(ClientIP.Response.Response));
+            using (var stringReader = new StringReader(receivedText))
+            {
+                ClientIP.Response.Response response = (ClientIP.Response.Response)serializer.Deserialize(stringReader);
+
+                // Output the data
+                tbBrutto.Text = KilosToTonns(response.StaticData.Brutto.ToString());    // 1
+                tbV13.Text = KilosToTonns(response.StaticData.Platform1.ToString());    // 2
+                tbV24.Text = KilosToTonns(response.StaticData.Platform2.ToString());    // 3
+                tbV12.Text = KilosToTonns(response.StaticData.PravBort1_2.ToString());  // 4
+                tbV34.Text = KilosToTonns(response.StaticData.LevBort3_4.ToString());   // 5
+                tbPP.Text = response.StaticData.ShiftPop.ToString();                    // 6
+                tbPR.Text = response.StaticData.ShiftPro.ToString();                    // 7
+                tbDELTA.Text = response.StaticData.Delta.ToString();                    // 8
+            }
+        }
+
+        // Перевожу тонны в киллограммы, возвращаю в строковом представлении.
+        private string KilosToTonns(string inputTonns)
+        {
+            if (!string.IsNullOrEmpty(inputTonns))
+            {
+                double outputKilos = 0;
+                if (double.TryParse(inputTonns, out outputKilos))
+                {
+                    return (outputKilos / 1000).ToString();
+                }
+                throw new Exception("Calculation mass is incorrect. | " + inputTonns + " |");
+            }
+            else
+            {
+                throw new Exception("Mass value is incorrect.");
+            }
+
         }
 
         #region CloseConnection()
@@ -272,6 +315,19 @@ namespace ClientIP
             }
         }
         #endregion
+        #region AppendTextToTextBox()
+        private void AppendTextToTextBox(string text, TextBox tb)
+        {
+            if (tb.InvokeRequired)
+            {
+                tb.BeginInvoke(new Action<string>(AppendTextToReceive), text);
+            }
+            else
+            {
+                tb.Text = text;
+            }
+        }
+        #endregion
 
         private void timerSend_Tick(object sender, EventArgs e)
         {
@@ -342,6 +398,16 @@ namespace ClientIP
                                     // добавить заполнение объекта XML формата
                                     // если данные принятые из udp корректные - возвращаю сообщение,
                                     // нет - возвращаю сообщение об ошибке 
+
+                                    if (item.Key.ToString() == "value02") AppendTextToTextBox(item.Value.ToString(), tbBrutto);
+                                    if (item.Key.ToString() == "value19") AppendTextToTextBox(item.Value.ToString(), tbV13);
+                                    if (item.Key.ToString() == "value20") AppendTextToTextBox(item.Value.ToString(), tbV24);
+                                    if (item.Key.ToString() == "value21") AppendTextToTextBox(item.Value.ToString(), tbV12);
+                                    if (item.Key.ToString() == "value22") AppendTextToTextBox(item.Value.ToString(), tbV34);
+                                    // для перекосов сделать метод
+                                    //if (item.Key.ToString() == "value02") AppendTextToTextBox(item.Value.ToString(), tbBrutto);
+                                    //if (item.Key.ToString() == "value02") AppendTextToTextBox(item.Value.ToString(), tbBrutto);
+
                                     AppendTextToReceive(String.Format("{0,-8} [{1,-15:D}]\n", item.Key, item.Value));
                                     LogLocal.WriteLogLocal(String.Format("{0,-8} [{1,-15:D}]\n", item.Key, item.Value));
                                 }
