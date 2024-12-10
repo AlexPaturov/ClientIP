@@ -173,16 +173,17 @@ namespace ClientIP
             using (var stringReader = new StringReader(receivedText))
             {
                 ClientIP.Response.Response response = (ClientIP.Response.Response)serializer.Deserialize(stringReader);
-
-                // Output the data
-                tbBrutto.Text = KilosToTonns(response.StaticData.Brutto.ToString());    // 1
-                tbV13.Text = KilosToTonns(response.StaticData.Platform1.ToString());    // 2
-                tbV24.Text = KilosToTonns(response.StaticData.Platform2.ToString());    // 3
-                tbV12.Text = KilosToTonns(response.StaticData.PravBort1_2.ToString());  // 4
-                tbV34.Text = KilosToTonns(response.StaticData.LevBort3_4.ToString());   // 5
-                tbPP.Text = response.StaticData.ShiftPop.ToString();                    // 6
-                tbPR.Text = response.StaticData.ShiftPro.ToString();                    // 7
-                tbDELTA.Text = response.StaticData.Delta.ToString();                    // 8
+                if (response.State != "Error")
+                {
+                    tbBrutto.Text = KilosToTonns(response.StaticData.Brutto.ToString());    // 1
+                    tbV13.Text = KilosToTonns(response.StaticData.Platform1.ToString());    // 2
+                    tbV24.Text = KilosToTonns(response.StaticData.Platform2.ToString());    // 3
+                    tbV12.Text = KilosToTonns(response.StaticData.PravBort1_2.ToString());  // 4
+                    tbV34.Text = KilosToTonns(response.StaticData.LevBort3_4.ToString());   // 5
+                    tbPP.Text = response.StaticData.ShiftPop.ToString();                    // 6
+                    tbPR.Text = response.StaticData.ShiftPro.ToString();                    // 7
+                    tbDELTA.Text = response.StaticData.Delta.ToString();                    // 8
+                }
             }
         }
 
@@ -218,6 +219,8 @@ namespace ClientIP
             {
                 _stream?.Close();
                 _client?.Close();
+                timerSend.Stop();
+                chbSentQueue.Checked = false;   
                 AppendTextToReceive("Client disconnected.\n");
                 LogLocal.WriteLogLocal("Client disconnected.");
             }
@@ -257,6 +260,7 @@ namespace ClientIP
         {
             if (chbSentQueue.Checked)
             {
+                timerSend.Interval = Int32.Parse(tbWaitSentMillisec.Text);
                 timerSend.Enabled = true;
             }
             else
